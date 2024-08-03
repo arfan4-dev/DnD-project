@@ -1,15 +1,12 @@
-// App.jsx
-import React, { useState } from 'react';
-import { DndContext } from '@dnd-kit/core';
+import React, { useEffect, useState } from 'react';
+import { DndContext, closestCenter } from '@dnd-kit/core';
 import { SortableContext, useSortable, arrayMove } from '@dnd-kit/sortable';
-import './App.css';
+import { CSS } from '@dnd-kit/utilities';
 
-// Draggable Group Component
-const DraggableGroup = ({ id, children }) => {
+const DraggableItem = ({ id, children }) => {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
-
   const style = {
-    transform: `translate3d(${transform?.x || 0}px, ${transform?.y || 0}px, 0)`,
+    transform: CSS.Transform.toString(transform),
     transition,
     padding: '8px',
     margin: '4px',
@@ -18,7 +15,6 @@ const DraggableGroup = ({ id, children }) => {
     borderRadius: '4px',
     cursor: 'grab',
   };
-
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
       {children}
@@ -27,113 +23,95 @@ const DraggableGroup = ({ id, children }) => {
 };
 
 const App = () => {
-  const [data, setData] = useState({
-    _id: "66acacd4b1c4660d6791346e",
-    companyId: "66a738407ea7dadd23344551",
-    selectedTemplate: 1,
-    text: [
-      {
-        innerText: "<p class=\"blockquote\">This is text 1</p>",
-        _id: "66acdcf2a01fbc87c82ce637"
-      },
-      {
-        innerText: "<p class=\"blockquote\">This is text 2</p>",
-        _id: "66acdcf2a01fbc87c82cee17"
-      },
-      {
-        innerText: "<p class=\"blockquote\">This is text editor</p>",
-        _id: "66acdcf2a01fbc87c82cee37"
-      }
-    ],
-    socialNetwork: [
-      {
-        link: "http://localhost:3000/edit-profile",
-        name: "Pinterest",
-        _id: "66acd996a01fbc87c82cedc8"
-      },
-      {
-        link: "http://localhost:3000/edit-profilehgjhgj",
-        name: "Reddit",
-        _id: "66acd996a01fbc87c82cedc9"
-      },
-      {
-        link: "http://localhost:3000/edit-profilehgjhgj",
-        name: "Vimeo",
-        _id: "66ace90bf6fa46410f956703"
-      }
-    ],
-    __v: 3,
-    link: "http://localhost:3000/edit-profile",
-    username: "arshan"
-  });
-
   const [items, setItems] = useState([
-    { id: 'text', content: data.text },
-    { id: 'socialNetwork', content: data.socialNetwork },
-    { id: 'link', content: data.link },
-    { id: 'username', content: data.username },
+    {
+      type: "text",
+      innerText: "<p class=\"blockquote\">This is text 1</p>",
+      _id: "66acdcf2a01fbc87c82ce637"
+    },
+    {
+      type: "text",
+      innerText: "<p class=\"blockquote\">This is text 2</p>",
+      _id: "66acdcf2a01fbc87c82cee17"
+    },
+    {
+      type: "text",
+      innerText: "<p class=\"blockquote\">This is text editor</p>",
+      _id: "66acdcf2a01fbc87c82cee37"
+    },
+    {
+      type: "social",
+      link: "http://localhost:3000/edit-profile",
+      name: "Pinterest",
+      _id: "66acd996a01fbc87c82cedc8"
+    },
+    {
+      type: "social",
+      link: "http://localhost:3000/edit-profilehgjhgj",
+      name: "Reddit",
+      _id: "66acd996a01fbc87c82cedc9"
+    },
+    {
+      type: "social",
+      link: "http://localhost:3000/edit-profilehgjhgj",
+      name: "Vimeo",
+      _id: "66ace90bf6fa46410f956703"
+    },
+    {
+      type: "username",
+      value: "arshan",
+      _id: "66ace90bf6fa46410f9536703"
+    },
+    {
+      type: "link",
+      value: "http://localhost:3000/edit-profile",
+      _id: "66ace90bf6fa46410f2956703"
+    },
+    {
+      type: "general",
+      _id: "66acacd4b1c4660d6791346e",
+      companyId: "66a738407ea7dadd23344551",
+      selectedTemplate: 1
+    }
   ]);
 
   const handleDragEnd = (event) => {
     const { active, over } = event;
 
     if (active.id !== over.id) {
-      setItems((items) => {
-        const oldIndex = items.findIndex(item => item.id === active.id);
-        const newIndex = items.findIndex(item => item.id === over.id);
+      const activeIndex = items.findIndex(item => item._id === active.id);
+      const overIndex = items.findIndex(item => item._id === over.id);
 
-        return arrayMove(items, oldIndex, newIndex);
-      });
+      const updatedItems = arrayMove(items, activeIndex, overIndex);
+      setItems(updatedItems);
     }
   };
 
-  const handleSave = () => {
-    const updatedData = { ...data };
-    items.forEach(item => {
-      updatedData[item.id] = item.content;
-    });
-
-    console.log(updatedData);
-  };
+  useEffect(() => {
+    console.log(items);
+  }, [items]);
 
   return (
-    <div>
-      <DndContext onDragEnd={handleDragEnd}>
-        <SortableContext items={items.map(item => item.id)}>
-          {items.map(item => (
-            <DraggableGroup key={item.id} id={item.id}>
-              {item.id === 'text' ? (
-                <div>
-                  {item.content.map((textItem) => (
-                    <div key={textItem._id} dangerouslySetInnerHTML={{ __html: textItem.innerText }} />
-                  ))}
+    <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <SortableContext items={items.filter(item => item.type !== "general").map(item => item._id)}>
+        {items
+          .filter(item => item.type !== "general")
+          .map((item) => (
+            <DraggableItem key={item._id} id={item._id}>
+              {item.type === "text" ? (
+                <div dangerouslySetInnerHTML={{ __html: item.innerText }} />
+              ) : item.type === "social" ? (
+                <div className="flex items-center gap-2">
+                  <span>{item.name}</span>
+                  <a href={item.link} target="_blank" rel="noopener noreferrer">{item.link}</a>
                 </div>
-              ) : item.id === 'socialNetwork' ? (
-                <div>
-                  {item.content.map((networkItem) => (
-                    <div key={networkItem._id}>
-                      <strong>{networkItem.name}</strong>
-                      <p>{networkItem.link}</p>
-                    </div>
-                  ))}
-                </div>
-              ) : item.id === 'link' ? (
-                <div>
-                  <strong>Link:</strong>
-                  <p>{item.content}</p>
-                </div>
-              ) : item.id === 'username' ? (
-                <div>
-                  <strong>Username:</strong>
-                  <p>{item.content}</p>
-                </div>
-              ) : null}
-            </DraggableGroup>
+              ) : (
+                <div>{item.value}</div>
+              )}
+            </DraggableItem>
           ))}
-        </SortableContext>
-      </DndContext>
-      <button onClick={handleSave}>Save</button>
-    </div>
+      </SortableContext>
+    </DndContext>
   );
 };
 
