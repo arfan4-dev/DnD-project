@@ -1,11 +1,11 @@
 // App.jsx
-import React, { useEffect, useState } from 'react';
-import { DndContext, useDraggable } from '@dnd-kit/core';
+import React, { useState } from 'react';
+import { DndContext } from '@dnd-kit/core';
 import { SortableContext, useSortable, arrayMove } from '@dnd-kit/sortable';
 import './App.css';
 
-// Draggable Item Component
-const DraggableItem = ({ id, children }) => {
+// Draggable Group Component
+const DraggableGroup = ({ id, children }) => {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
 
   const style = {
@@ -32,106 +32,108 @@ const App = () => {
     companyId: "66a738407ea7dadd23344551",
     selectedTemplate: 1,
     text: [
-      { innerText: "<p class=\"blockquote\">This is text 1</p>", _id: "66acdcf2a01fbc87c82ce637" },
-      { innerText: "<p class=\"blockquote\">This is text</p>", _id: "66acdcf2a01fbc87c82cee17" },
-      { innerText: "<p class=\"blockquote\">This is text editor</p>", _id: "66acdcf2a01fbc87c82cee37" }
+      {
+        innerText: "<p class=\"blockquote\">This is text 1</p>",
+        _id: "66acdcf2a01fbc87c82ce637"
+      },
+      {
+        innerText: "<p class=\"blockquote\">This is text 2</p>",
+        _id: "66acdcf2a01fbc87c82cee17"
+      },
+      {
+        innerText: "<p class=\"blockquote\">This is text editor</p>",
+        _id: "66acdcf2a01fbc87c82cee37"
+      }
     ],
     socialNetwork: [
-      { link: "http://localhost:3000/edit-profile", name: "Pinterest", _id: "66acd996a01fbc87c82cedc8" },
-      { link: "http://localhost:3000/edit-profilehgjhgj", name: "Reddit", _id: "66acd996a01fbc87c82cedc9" },
-      { link: "http://localhost:3000/edit-profilehgjhgj", name: "Vimeo", _id: "66ace90bf6fa46410f956703" }
+      {
+        link: "http://localhost:3000/edit-profile",
+        name: "Pinterest",
+        _id: "66acd996a01fbc87c82cedc8"
+      },
+      {
+        link: "http://localhost:3000/edit-profilehgjhgj",
+        name: "Reddit",
+        _id: "66acd996a01fbc87c82cedc9"
+      },
+      {
+        link: "http://localhost:3000/edit-profilehgjhgj",
+        name: "Vimeo",
+        _id: "66ace90bf6fa46410f956703"
+      }
     ],
     __v: 3,
     link: "http://localhost:3000/edit-profile",
     username: "arshan"
   });
 
-  // Flatten data object into an array of items
-  const flattenData = () => {
-    const items = [];
-
-    // Handle text and socialNetwork arrays
-    Object.keys(data).forEach(key => {
-      if (Array.isArray(data[key])) {
-        data[key].forEach(item => {
-          items.push({ ...item, id: item._id, type: key });
-        });
-      }
-    });
-
-    // Add special handling for other keys if needed
-    if (data.username) {
-      items.push({ id: 'username', content: `Username: ${data.username}`, type: 'username' });
-    }
-    if (data.link) {
-      items.push({ id: 'link', content: `Link: ${data.link}`, type: 'link' });
-    }
-
-    return items;
-  };
-
-  const [flattenedData, setFlattenedData] = useState(flattenData());
+  const [items, setItems] = useState([
+    { id: 'text', content: data.text },
+    { id: 'socialNetwork', content: data.socialNetwork },
+    { id: 'link', content: data.link },
+    { id: 'username', content: data.username },
+  ]);
 
   const handleDragEnd = (event) => {
     const { active, over } = event;
 
-    if (!active || !over) {
-      return; // Exit if either is null
-    }
-
     if (active.id !== over.id) {
-      setFlattenedData(prevFlattenedData => {
-        const oldIndex = prevFlattenedData.findIndex(item => item.id === active.id);
-        const newIndex = prevFlattenedData.findIndex(item => item.id === over.id);
+      setItems((items) => {
+        const oldIndex = items.findIndex(item => item.id === active.id);
+        const newIndex = items.findIndex(item => item.id === over.id);
 
-        // Ensure indexes are valid
-        if (oldIndex === -1 || newIndex === -1) {
-          return prevFlattenedData;
-        }
-
-        const updatedFlattenedData = arrayMove(prevFlattenedData, oldIndex, newIndex);
-
-        // Rebuild the original data structure
-        const updatedData = { ...data };
-        updatedData.text = updatedFlattenedData.filter(item => item.type === 'text');
-        updatedData.socialNetwork = updatedFlattenedData.filter(item => item.type === 'socialNetwork');
-
-        // Update special keys if they are in the flattened data
-        const usernameItem = updatedFlattenedData.find(item => item.type === 'username');
-        const linkItem = updatedFlattenedData.find(item => item.type === 'link');
-        if (usernameItem) updatedData.username = usernameItem.content.replace('Username: ', '');
-        if (linkItem) updatedData.link = linkItem.content.replace('Link: ', '');
-
-        setData(updatedData);
-        console.log("🚀 ~ handleDragEnd ~ updatedData:", updatedData)
-        return updatedFlattenedData;
+        return arrayMove(items, oldIndex, newIndex);
       });
     }
   };
 
-  useEffect(() => {
-    console.log(data);
-  }, [data]);
+  const handleSave = () => {
+    const updatedData = { ...data };
+    items.forEach(item => {
+      updatedData[item.id] = item.content;
+    });
+
+    console.log(updatedData);
+  };
 
   return (
-    <DndContext onDragEnd={handleDragEnd}>
-      <SortableContext items={flattenedData.map(item => item.id)}>
-        {flattenedData.map((item) => (
-          <DraggableItem key={item.id} id={item.id}>
-            {item.type === 'text' ? (
-              <div dangerouslySetInnerHTML={{ __html: item.innerText }} />
-            ) : item.type === 'socialNetwork' ? (
-              <div>
-                <strong>{item.name}</strong>
-                <p>{item.link}</p>
-              </div>
-            ) : (
-              <div>{item.content}</div>
-            )}
-          </DraggableItem>
-        ))}
-      </SortableContext>
-    </DndContext>
+    <div>
+      <DndContext onDragEnd={handleDragEnd}>
+        <SortableContext items={items.map(item => item.id)}>
+          {items.map(item => (
+            <DraggableGroup key={item.id} id={item.id}>
+              {item.id === 'text' ? (
+                <div>
+                  {item.content.map((textItem) => (
+                    <div key={textItem._id} dangerouslySetInnerHTML={{ __html: textItem.innerText }} />
+                  ))}
+                </div>
+              ) : item.id === 'socialNetwork' ? (
+                <div>
+                  {item.content.map((networkItem) => (
+                    <div key={networkItem._id}>
+                      <strong>{networkItem.name}</strong>
+                      <p>{networkItem.link}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : item.id === 'link' ? (
+                <div>
+                  <strong>Link:</strong>
+                  <p>{item.content}</p>
+                </div>
+              ) : item.id === 'username' ? (
+                <div>
+                  <strong>Username:</strong>
+                  <p>{item.content}</p>
+                </div>
+              ) : null}
+            </DraggableGroup>
+          ))}
+        </SortableContext>
+      </DndContext>
+      <button onClick={handleSave}>Save</button>
+    </div>
   );
 };
 
