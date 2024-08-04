@@ -36,7 +36,7 @@ const SortableItem = ({ id, name, handleClick, data }) => {
             ))}
           </div>
         ) : (
-          <div> {JSON.stringify(data)} </div> // Fallback rendering for unknown names
+          <div> {String(data)} </div> // Fallback rendering for unknown names
         )
       }
     </div>
