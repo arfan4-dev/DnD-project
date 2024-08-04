@@ -17,6 +17,11 @@ const SortableItem = ({ id, name, handleClick, data }) => {
     backgroundColor: '#f9f9f9',
   };
 
+  const handleDelete = (itemId, event) => {
+    event.stopPropagation(); // Prevents click event from propagating to parent div
+    console.log('Clicked item ID:', itemId);
+  };
+
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners} onClick={() => handleClick(id)}>
       {
@@ -29,19 +34,21 @@ const SortableItem = ({ id, name, handleClick, data }) => {
         ) : name === 'socialNetwork' ? (
           <div>
             {data.map((item) => (
-              <>
-              <a key={item._id} href={item.link} target="_blank" rel="noreferrer">{item.name}</a>
-              <div> {item.link} </div>
-              </>
+              <div key={item._id}>
+                <a href={item.link} target="_blank" rel="noreferrer">{item.name}</a>
+                <div>{item.link}</div>
+                <button onClick={(event) => handleDelete(item._id, event)}>Delete</button>
+              </div>
             ))}
           </div>
         ) : (
-          <div> {String(data)} </div> // Fallback rendering for unknown names
+          <div>{String(data)}</div> // Fallback rendering for unknown names
         )
       }
     </div>
   );
 };
+
 
 // Main App component
 const App = () => {
