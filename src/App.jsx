@@ -17,32 +17,37 @@ const SortableItem = ({ id, name, handleClick, data }) => {
     backgroundColor: '#f9f9f9',
   };
 
-  const handleDelete = (itemId, event) => {
-    event.stopPropagation(); // Prevents click event from propagating to parent div
+  const handleDelete = (event, itemId) => {
+    event.stopPropagation();
+    event.preventDefault();
     console.log('Clicked item ID:', itemId);
+    handleClick(itemId);
   };
 
+
+
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners} onClick={() => handleClick(id)}>
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners} >
       {
         name === 'text' ? (
           <div>
             {data.map((item) => (
-              <div key={item._id} dangerouslySetInnerHTML={{ __html: item.innerText }} />
+              <div key={item._id} dangerouslySetInnerHTML={{ __html: item.innerText }} onMouseDown={(event) => handleDelete(event, item._id)} />
+
             ))}
           </div>
         ) : name === 'socialNetwork' ? (
           <div>
             {data.map((item) => (
               <div key={item._id}>
-                <a href={item.link} target="_blank" rel="noreferrer">{item.name}</a>
-                <div>{item.link}</div>
-                <button onClick={(event) => handleDelete(item._id, event)}>Delete</button>
+                <a onMouseDown={(event) => handleDelete(event, item._id)} href={item.link} target="_blank" rel="noreferrer">{item.name}</a>
+                <div onMouseDown={(event) => handleDelete(event, item._id)}>{item.link}</div>
+                <button className='bg-slate-300 p-2 rounded-lg' onMouseDown={(event) => handleDelete(event, item._id)}>Delete</button>
               </div>
             ))}
           </div>
         ) : (
-          <div>{String(data)}</div> // Fallback rendering for unknown names
+          <div onMouseDown={(event) => handleDelete(event, data)}>{String(data)} </div> // Fallback rendering for unknown names
         )
       }
     </div>
@@ -91,18 +96,30 @@ const App = () => {
   // Handler for drag-and-drop end event
   const handleDragEnd = (event) => {
     const { active, over } = event;
-    if (active.id !== over.id) {
-      const keys = Object.keys(items);
-      const oldIndex = keys.indexOf(active.id);
-      const newIndex = keys.indexOf(over.id);
-      const newKeys = arrayMove(keys, oldIndex, newIndex);
-      const newItems = {};
-      newKeys.forEach(key => {
-        newItems[key] = items[key];
-      });
-      setItems(newItems);
+
+    // Check if either active or over is null
+    if (!active || !over || active.id === over.id) {
+      return;
     }
+
+    const keys = Object.keys(items);
+    const oldIndex = keys.indexOf(active.id);
+    const newIndex = keys.indexOf(over.id);
+
+    // Ensure both indices are valid before proceeding
+    if (oldIndex === -1 || newIndex === -1) {
+      return;
+    }
+
+    const newKeys = arrayMove(keys, oldIndex, newIndex);
+    const newItems = {};
+    newKeys.forEach(key => {
+      newItems[key] = items[key];
+    });
+
+    setItems(newItems);
   };
+
 
   // Handler for item click event
   const handleItemClick = (id) => {
@@ -111,7 +128,7 @@ const App = () => {
 
   // Log items when they change
   useEffect(() => {
-    console.log('Items:', items);
+    console.log('Items updated:', items);
   }, [items]);
 
   return (
