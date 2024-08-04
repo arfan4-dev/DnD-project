@@ -5,7 +5,7 @@ import { CSS } from '@dnd-kit/utilities';
 
 // Component for rendering sortable items
 const SortableItem = ({ id, name, handleClick, data }) => {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
+  const { attributes, setNodeRef, transform, transition } = useSortable({ id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -17,22 +17,18 @@ const SortableItem = ({ id, name, handleClick, data }) => {
     backgroundColor: '#f9f9f9',
   };
 
-  const handleDelete = (event, itemId) => {
-    event.stopPropagation();
-    event.preventDefault();
+  const handleDelete = (itemId) => {
     console.log('Clicked item ID:', itemId);
     handleClick(itemId);
   };
 
-
-
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners} >
+    <div ref={setNodeRef} style={style} {...attributes} >
       {
         name === 'text' ? (
           <div>
             {data.map((item) => (
-              <div key={item._id} dangerouslySetInnerHTML={{ __html: item.innerText }} onMouseDown={(event) => handleDelete(event, item._id)} />
+              <div key={item._id} onClick={() => handleDelete(item._id)} dangerouslySetInnerHTML={{ __html: item.innerText }} />
 
             ))}
           </div>
@@ -40,14 +36,14 @@ const SortableItem = ({ id, name, handleClick, data }) => {
           <div>
             {data.map((item) => (
               <div key={item._id}>
-                <a onMouseDown={(event) => handleDelete(event, item._id)} href={item.link} target="_blank" rel="noreferrer">{item.name}</a>
-                <div onMouseDown={(event) => handleDelete(event, item._id)}>{item.link}</div>
-                <button className='bg-slate-300 p-2 rounded-lg' onMouseDown={(event) => handleDelete(event, item._id)}>Delete</button>
+                <a onClick={() => handleDelete(item._id)} href={item.link} target="_blank" rel="noreferrer">{item.name}</a>
+                <div onClick={() => handleDelete(item._id)}>{item.link}</div>
+                <button className='bg-slate-300 p-2 rounded-lg' onClick={() => handleDelete(item._id)}>Delete</button>
               </div>
             ))}
           </div>
         ) : (
-          <div onMouseDown={(event) => handleDelete(event, data)}>{String(data)} </div> // Fallback rendering for unknown names
+          <div onClick={() => handleDelete(data)}>{String(data)} </div> // Fallback rendering for unknown names
         )
       }
     </div>
@@ -97,6 +93,7 @@ const App = () => {
   const handleDragEnd = (event) => {
     const { active, over } = event;
 
+    console.log("drag handler");
     // Check if either active or over is null
     if (!active || !over || active.id === over.id) {
       return;
@@ -124,6 +121,12 @@ const App = () => {
   // Handler for item click event
   const handleItemClick = (id) => {
     console.log('Clicked item ID:', id);
+    // setItems(prevItems => {
+    //   const updatedItems = { ...prevItems };
+    //   // Remove item from relevant category
+    //   updatedItems.socialNetwork = updatedItems.socialNetwork.filter(item => item._id !== id);
+    //   return updatedItems;
+    // });
   };
 
   // Log items when they change
