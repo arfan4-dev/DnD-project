@@ -3,7 +3,8 @@ import { DndContext, closestCenter } from '@dnd-kit/core';
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-const SortableItem = ({ id, name, handleClick }) => {
+// Component for rendering sortable items
+const SortableItem = ({ id, name, handleClick, data }) => {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
 
   const style = {
@@ -18,11 +19,31 @@ const SortableItem = ({ id, name, handleClick }) => {
 
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners} onClick={() => handleClick(id)}>
-      {name}
+      {
+        name === 'text' ? (
+          <div>
+            {data.map((item) => (
+              <div key={item._id} dangerouslySetInnerHTML={{ __html: item.innerText }} />
+            ))}
+          </div>
+        ) : name === 'socialNetwork' ? (
+          <div>
+            {data.map((item) => (
+              <>
+              <a key={item._id} href={item.link} target="_blank" rel="noreferrer">{item.name}</a>
+              <div> {item.link} </div>
+              </>
+            ))}
+          </div>
+        ) : (
+          <div> {JSON.stringify(data)} </div> // Fallback rendering for unknown names
+        )
+      }
     </div>
   );
 };
 
+// Main App component
 const App = () => {
   const [items, setItems] = useState({
     _id: "66acacd4b1c4660d6791346e",
@@ -60,6 +81,7 @@ const App = () => {
     username: "arshan"
   });
 
+  // Handler for drag-and-drop end event
   const handleDragEnd = (event) => {
     const { active, over } = event;
     if (active.id !== over.id) {
@@ -75,10 +97,12 @@ const App = () => {
     }
   };
 
+  // Handler for item click event
   const handleItemClick = (id) => {
     console.log('Clicked item ID:', id);
   };
 
+  // Log items when they change
   useEffect(() => {
     console.log('Items:', items);
   }, [items]);
@@ -89,7 +113,7 @@ const App = () => {
       <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={Object.keys(items)} strategy={verticalListSortingStrategy}>
           {Object.keys(items).map((key) => (
-            <SortableItem key={key} id={key} name={key} handleClick={handleItemClick} />
+            <SortableItem key={key} id={key} name={key} data={items[key]} handleClick={handleItemClick} />
           ))}
         </SortableContext>
       </DndContext>
